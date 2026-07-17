@@ -1,6 +1,6 @@
 #!/bin/bash
 
-source ~/scripts/ansi_colors.sh
+source ~/scripts/bash_scripts/ansi_colors.sh
 
 if [[ $# -eq 0 ]]; then
     printf '%b\n' "${RED}No argument provided..${NC}"
@@ -42,6 +42,7 @@ or_check_raw=$(or_check "$switchname")
 if [[ "$rack_type" == "ORV3" ]]; then
     # ORv3 devices labeled PSU-X or BBU-X
     or_check_display=$(echo "$or_check_raw" | awk 'NR > 3 && /Shelf/{print}' | sed 's/^/| /')
+    total_units=$(echo "$or_check_raw" | grep -Ec 'Shelf-.*BBU-|Shelf-.*PSU-')
     psu_found=$(echo "$or_check_raw" | grep -c "PSU-")
     bbu_found=$(echo "$or_check_raw" | grep -c "BBU-")
 
@@ -49,9 +50,11 @@ if [[ "$rack_type" == "ORV3" ]]; then
     if [[ "$shelf_count" -eq 2 ]]; then
         expected_psu=6
         expected_bbu=6
+        expected_total=$((expected_psu + expected_bbu))
     elif [[ "$shelf_count" -eq 4 ]]; then
         expected_psu=12
         expected_bbu=12
+        expected_total=$((expected_psu + expected_bbu))
     else
         printf '%b\n' "${RED}Error: Unexpected shelf count: ${shelf_count}${NC}"
         exit 1
@@ -103,6 +106,7 @@ if [[ "$rack_type" == "ORV2" ]]; then
     printf '%s\n' "|   PSU healthy:   ${psu_found} / ${expected_psu}"
     printf '%s\n' "|   BBU healthy:   ${bbu_found} / ${expected_bbu}"
 else
+    printf '%s\n' "|   Units present: ${total_units} / ${expected_total} expected"
     printf '%s\n' "|   PSU found: ${psu_found} / ${expected_psu} expected"
     printf '%s\n' "|   BBU found: ${bbu_found} / ${expected_bbu} expected"
 fi
